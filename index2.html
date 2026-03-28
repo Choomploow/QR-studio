@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>QR Studio — Custom QR Code Generator</title>
+<meta name="description" content="Create beautiful, fully customizable QR codes with QR Studio.">
+
+<!-- Open Graph -->
+<meta property="og:title" content="QR Studio">
+<meta property="og:description" content="Create stunning QR codes instantly.">
+<meta property="og:image" content="https://choomploow.github.io/QR-studio/icon.png">
+<meta property="og:url" content="https://choomploow.github.io/QR-studio/">
+
+<!-- QR Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+body{
+  font-family: Arial;
+  background:#0f0f0f;
+  color:#eee;
+  margin:0;
+}
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+h1{
+  font-size:32px;
+}
+.sub{
+  color:#aaa;
+  margin-bottom:20px;
+}
+
+/* layout */
+.grid{
+  display:grid;
+  grid-template-columns:1fr 400px;
+  gap:20px;
+}
+.panel{
+  background:#1a1a1a;
+  padding:15px;
+  border-radius:12px;
+}
+
+/* inputs */
+input, select{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  border-radius:8px;
+  border:none;
+  background:#111;
+  color:#fff;
+}
+label{
+  font-size:12px;
+  color:#aaa;
+}
+
+/* buttons */
+button{
+  background:#fff;
+  color:#000;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+/* QR preview */
+#qrcode{
+  background:#fff;
+  padding:10px;
+  display:inline-block;
+}
+
+/* feature tags */
+.tag{
+  display:inline-block;
+  padding:4px 8px;
+  background:#222;
+  border-radius:6px;
+  margin:4px;
+  font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>QR Studio</h1>
+<p class="sub">// Custom codes · Link shortening · New features added daily</p>
+
+<div class="grid">
+
+<!-- LEFT -->
+<div>
+
+<div class="panel">
+
+<label>Type</label>
+<select id="type" onchange="switchType()">
+<option value="url">URL</option>
+<option value="text">Text</option>
+<option value="wifi">WiFi</option>
+</select>
+
+<div id="urlBox">
+<label>URL</label>
+<input id="url" placeholder="https://example.com">
+
+<label>
+<input type="checkbox" onchange="shorten(this)"> Shorten link
+</label>
+</div>
+
+<div id="textBox" style="display:none">
+<label>Text</label>
+<input id="text" placeholder="Hello world">
+</div>
+
+<div id="wifiBox" style="display:none">
+<label>SSID</label>
+<input id="ssid">
+<label>Password</label>
+<input id="pass">
+</div>
+
+<label>Color</label>
+<input type="color" id="color" value="#000000">
+
+<label>Size</label>
+<input type="range" id="size" min="128" max="512" value="256">
+
+<label>Logo</label>
+<input type="file" id="logo">
+
+<button onclick="generate()">Generate QR</button>
+
+</div>
+
+<!-- FEATURES -->
+<div class="panel">
+<h3>Features</h3>
+
+<div class="tag">QR Generation</div>
+<div class="tag">Custom Colors</div>
+<div class="tag">Logo Embed</div>
+<div class="tag">PNG Export</div>
+<div class="tag">Link Shortening</div>
+<div class="tag">WiFi QR</div>
+<div class="tag">Dynamic QR (soon)</div>
+<div class="tag">Analytics (soon)</div>
+
+</div>
+
+</div>
+
+<!-- RIGHT -->
+<div class="panel" style="text-align:center">
+
+<div id="qrcode"></div>
+
+<br>
+
+<button onclick="download()">Download</button>
+<button onclick="copyLink()">Copy Data</button>
+
+</div>
+
+</div>
+</div>
+
+<script>
+let qr;
+
+function getData(){
+  const type = document.getElementById("type").value;
+
+  if(type==="url"){
+    return document.getElementById("url").value;
+  }
+  if(type==="text"){
+    return document.getElementById("text").value;
+  }
+  if(type==="wifi"){
+    return `WIFI:T:WPA;S:${ssid.value};P:${pass.value};;`;
+  }
+}
+
+function generate(){
+  const data = getData();
+  const color = document.getElementById("color").value;
+  const size = document.getElementById("size").value;
+
+  document.getElementById("qrcode").innerHTML = "";
+
+  qr = new QRCode(document.getElementById("qrcode"),{
+    text:data,
+    width:size,
+    height:size,
+    colorDark:color,
+    colorLight:"#ffffff"
+  });
+
+  setTimeout(addLogo,200);
+}
+
+function addLogo(){
+  const file = document.getElementById("logo").files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = document.createElement("img");
+    img.src = e.target.result;
+    img.style.width="60px";
+    img.style.position="absolute";
+
+    const qrBox = document.getElementById("qrcode");
+    qrBox.style.position="relative";
+    qrBox.appendChild(img);
+
+    img.style.top="50%";
+    img.style.left="50%";
+    img.style.transform="translate(-50%,-50%)";
+  }
+  reader.readAsDataURL(file);
+}
+
+function download(){
+  const canvas = document.querySelector("#qrcode canvas");
+  const link = document.createElement("a");
+  link.href = canvas.toDataURL();
+  link.download = "qr.png";
+  link.click();
+}
+
+function copyLink(){
+  navigator.clipboard.writeText(getData());
+  alert("Copied!");
+}
+
+function switchType(){
+  urlBox.style.display="none";
+  textBox.style.display="none";
+  wifiBox.style.display="none";
+
+  document.getElementById(document.getElementById("type").value+"Box").style.display="block";
+}
+
+function shorten(el){
+  const input = document.getElementById("url");
+
+  if(el.checked){
+    input.dataset.old = input.value;
+    input.value = "https://qrstu.io/" + Math.random().toString(36).slice(2,7);
+  }else{
+    input.value = input.dataset.old || "";
+  }
+}
+</script>
+
+</body>
+</html>
