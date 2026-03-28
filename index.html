@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #f7f3ec;
+  --cream2: #ede7dc;
+  --cream3: #d9d0c4;
+  --ink: #1c1814;
+  --ink2: #3d3530;
+  --ink3: #7a6f65;
+  --gold: #b8894a;
+  --gold-light: #f0d9b5;
+  --red: #c0392b;
+  --white: #fff;
+  --r: 14px;
+  --rs: 9px;
+}
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  min-height: 100vh;
+}
+.wrap { max-width: 1220px; margin: 0 auto; padding: 0 20px 80px; }
+header { padding: 48px 0 36px; border-bottom: 1px solid var(--cream3); margin-bottom: 32px; }
+.ey { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.ey::before { content: ''; display: block; width: 24px; height: 1px; background: var(--gold); }
+h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(40px,5vw,68px); font-weight: 300; line-height: 1; letter-spacing: -1px; }
+h1 em { font-style: italic; color: var(--gold); }
+.sub { color: var(--ink3); font-size: 11px; letter-spacing: 1px; margin-top: 12px; }
+.layout { display: grid; grid-template-columns: 1fr 370px; gap: 20px; align-items: start; }
+@media(max-width:840px){ .layout { grid-template-columns: 1fr; } }
+
+/* Panel */
+.panel { background: var(--white); border: 1px solid var(--cream2); border-radius: var(--r); margin-bottom: 14px; overflow: hidden; }
+.ah { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; border-bottom: 1px solid transparent; transition: background .15s; user-select: none; }
+.ah:hover { background: #faf7f2; }
+.ah.op { border-bottom-color: var(--cream2); }
+.at { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.ai { width: 22px; height: 22px; border-radius: 50%; background: var(--cream2); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--gold); flex-shrink: 0; }
+.ar { font-size: 10px; color: var(--ink3); transition: transform .2s; }
+.ah.op .ar { transform: rotate(180deg); }
+.ab { display: none; padding: 20px; }
+.ab.op { display: block; }
+
+/* Types */
+.ttabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 18px; }
+.tt { padding: 6px 13px; border: 1px solid var(--cream3); border-radius: 100px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink3); cursor: pointer; transition: all .15s; background: var(--white); }
+.tt:hover { border-color: var(--gold-light); color: var(--ink); }
+.tt.on { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+.tf { display: none; }
+.tf.on { display: block; }
+
+/* Form */
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fd { margin-bottom: 14px; }
+.fd:last-child { margin-bottom: 0; }
+.lb { display: block; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 5px; }
+input[type=text], textarea, select {
+  width: 100%; padding: 10px 12px;
+  background: var(--cream); border: 1px solid var(--cream3); border-radius: var(--rs);
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink);
+  outline: none; transition: border-color .15s; -webkit-appearance: none;
+}
+input[type=text]:focus, textarea:focus, select:focus { border-color: var(--gold); background: var(--white); }
+textarea { resize: vertical; min-height: 70px; }
+select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5z' fill='%237a6f65'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+/* Chips */
+.cg { display: flex; gap: 6px; flex-wrap: wrap; }
+.ch { padding: 7px 12px; border: 1px solid var(--cream3); border-radius: var(--rs); font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.5px; color: var(--ink3); cursor: pointer; transition: all .15s; background: var(--white); user-select: none; }
+.ch:hover { color: var(--ink); background: var(--cream); }
+.ch.on { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+
+/* Style cards */
+.sg { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px,1fr)); gap: 8px; }
+.sc { border: 1.5px solid var(--cream2); border-radius: 10px; padding: 10px 6px 8px; cursor: pointer; text-align: center; transition: all .15s; background: var(--white); user-select: none; }
+.sc:hover { border-color: var(--gold-light); }
+.sc.on { border-color: var(--gold); background: #fdf9f4; box-shadow: 0 0 0 1px var(--gold); }
+.sp { width: 42px; height: 42px; margin: 0 auto 7px; display: grid; grid-template-columns: repeat(5,1fr); gap: 1.5px; }
+.sp .p { background: var(--ink3); border-radius: var(--pr, 0); }
+.sc.on .sp .p { background: var(--gold); }
+.sl { font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink3); }
+.sc.on .sl { color: var(--gold); }
+
+/* Eye cards */
+.eg { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px,1fr)); gap: 8px; }
+.ec2 { border: 1.5px solid var(--cream2); border-radius: 10px; padding: 10px 6px 8px; cursor: pointer; text-align: center; transition: all .15s; background: var(--white); user-select: none; }
+.ec2:hover { border-color: var(--gold-light); }
+.ec2.on { border-color: var(--gold); background: #fdf9f4; box-shadow: 0 0 0 1px var(--gold); }
+.ec2 svg { color: var(--ink3); display: block; margin: 0 auto 6px; }
+.ec2.on svg { color: var(--gold); }
+.ec2 .sl { font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink3); }
+.ec2.on .sl { color: var(--gold); }
+
+/* Colors */
+.cpair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.cb { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--cream3); border-radius: var(--rs); cursor: pointer; background: var(--white); transition: border-color .15s; }
+.cb:hover { border-color: var(--gold-light); }
+.sw { width: 26px; height: 26px; border-radius: 6px; border: 1px solid rgba(0,0,0,.08); flex-shrink: 0; position: relative; overflow: hidden; }
+.sw input[type=color] { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); opacity: 0; cursor: pointer; border: none; }
+.cl { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink3); }
+.cv { font-size: 11px; color: var(--ink); margin-top: 1px; }
+
+/* Range */
+.rf { margin-bottom: 14px; }
+.rh { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.rv { font-size: 11px; color: var(--gold); font-weight: 500; }
+input[type=range] { width: 100%; -webkit-appearance: none; height: 2px; background: var(--cream3); border-radius: 100px; outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--white); border: 2px solid var(--gold); box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+
+/* Toggle */
+.tr { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; }
+.tr + .tr { border-top: 1px solid var(--cream2); }
+.tl { font-size: 11px; color: var(--ink2); }
+.tog { position: relative; width: 38px; height: 20px; cursor: pointer; flex-shrink: 0; }
+.tog input { opacity: 0; width: 0; height: 0; }
+.tt2 { position: absolute; inset: 0; border-radius: 100px; background: var(--cream3); border: 1px solid var(--cream3); transition: all .2s; }
+.tn { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink3); transition: all .2s; }
+.tog input:checked ~ .tt2 { background: var(--gold); border-color: var(--gold); }
+.tog input:checked ~ .tn { transform: translateX(18px); background: var(--white); }
+
+/* Divider */
+.sd { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--ink3); margin: 18px 0 11px; display: flex; align-items: center; gap: 10px; }
+.sd::after { content: ''; flex: 1; height: 1px; background: var(--cream2); }
+
+/* Logo upload */
+.dz { border: 1.5px dashed var(--cream3); border-radius: var(--rs); padding: 20px 16px; text-align: center; cursor: pointer; transition: all .15s; background: var(--cream); position: relative; }
+.dz:hover { border-color: var(--gold-light); background: #fdf9f4; }
+.dz.hf { border-color: var(--gold); border-style: solid; background: #fdf9f4; }
+.dz input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.di { font-size: 24px; margin-bottom: 6px; }
+.dt { font-size: 11px; color: var(--ink3); line-height: 1.5; }
+.dt strong { color: var(--ink); }
+.lr { display: none; align-items: center; gap: 12px; margin-top: 12px; }
+.lr.on { display: flex; }
+.li { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--cream3); }
+.lf { font-size: 11px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; flex: 1; }
+.br { padding: 4px 10px; border: 1px solid var(--cream3); border-radius: 6px; font-family: 'IBM Plex Mono',monospace; font-size: 10px; color: var(--red); cursor: pointer; background: var(--white); transition: all .15s; }
+.br:hover { background: #fff5f5; border-color: var(--red); }
+
+/* Presets */
+.pr-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.pr { width: 34px; height: 34px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all .15s; }
+.pr:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.pr.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+
+/* Preview */
+.pvp { position: sticky; top: 24px; }
+.pvi { background: var(--white); border: 1px solid var(--cream2); border-radius: var(--r); overflow: hidden; }
+.pvt { padding: 14px 18px; border-bottom: 1px solid var(--cream2); display: flex; align-items: center; justify-content: space-between; }
+.pvl { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); display: flex; align-items: center; gap: 8px; }
+.ld { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+.pvv { font-size: 9px; color: var(--ink3); letter-spacing: .5px; }
+.cw { padding: 24px; display: flex; justify-content: center; background: repeating-conic-gradient(var(--cream) 0% 25%, var(--cream2) 0% 50%) 0 0/16px 16px; min-height: 200px; align-items: center; }
+#qrc { border-radius: 4px; max-width: 100%; height: auto; display: block; }
+.pst { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--cream2); }
+.st { padding: 12px; text-align: center; border-right: 1px solid var(--cream2); }
+.st:last-child { border-right: none; }
+.sv2 { font-family: 'Cormorant Garamond',serif; font-size: 20px; font-weight: 600; color: var(--gold); display: block; }
+.sk { font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); }
+.pa { padding: 16px 18px; display: flex; gap: 8px; }
+.bdl { flex: 1; padding: 12px 16px; background: var(--ink); color: var(--cream); border: none; border-radius: var(--rs); font-family: 'Cormorant Garamond',serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.bdl:hover { background: #2e2820; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(28,24,20,.25); }
+.bsm { padding: 12px 13px; background: var(--white); border: 1px solid var(--cream3); border-radius: var(--rs); font-family: 'IBM Plex Mono',monospace; font-size: 11px; color: var(--ink3); cursor: pointer; transition: all .15s; }
+.bsm:hover { border-color: var(--gold-light); color: var(--ink); background: var(--cream); }
+
+.toast { position: fixed; bottom: 28px; right: 28px; background: var(--ink); color: var(--cream); padding: 12px 20px; border-radius: 10px; font-size: 12px; transform: translateY(60px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); z-index: 9999; pointer-events: none; }
+.toast.on { transform: translateY(0); opacity: 1; }
+.hid { display: none !important; }
+.ctrl { max-height: calc(100vh - 40px); overflow-y: auto; }
+.ctrl::-webkit-scrollbar { width: 3px; }
+.ctrl::-webkit-scrollbar-thumb { background: var(--cream3); border-radius: 100px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="ey">Generative Design Tool</div>
+    <h1>QR <em>Studio</em></h1>
+    <p class="sub">// Custom codes · Beautiful by design · Export ready</p>
+  </header>
+
+  <div class="layout">
+    <div class="ctrl">
+
+      <!-- CONTENT -->
+      <div class="panel">
+        <div class="ah op" onclick="toggleAcc(this)">
+          <span class="at"><span class="ai">✦</span>Content</span>
+          <span class="ar">▾</span>
+        </div>
+        <div class="ab op">
+          <div class="ttabs">
+            <div class="tt on" onclick="setType('url',this)">URL</div>
+            <div class="tt" onclick="setType('text',this)">Text</div>
+            <div class="tt" onclick="setType('email',this)">Email</div>
+            <div class="tt" onclick="setType('phone',this)">Phone</div>
+            <div class="tt" onclick="setType('wifi',this)">WiFi</div>
+            <div class="tt" onclick="setType('sms',this)">SMS</div>
+            <div class="tt" onclick="setType('vcard',this)">vCard</div>
+          </div>
+          <div id="tf-url" class="tf on">
+            <div class="fd"><label class="lb">Website URL</label><input type="text" id="v-url" value="https://example.com" oninput="regen()"></div>
+          </div>
+          <div id="tf-text" class="tf">
+            <div class="fd"><label class="lb">Text Message</label><textarea id="v-text" placeholder="Your text here..." oninput="regen()"></textarea></div>
+          </div>
+          <div id="tf-email" class="tf">
+            <div class="row2">
+              <div class="fd"><label class="lb">Email</label><input type="text" id="v-email" placeholder="name@example.com" oninput="regen()"></div>
+              <div class="fd"><label class="lb">Subject</label><input type="text" id="v-esubj" placeholder="Hello!" oninput="regen()"></div>
+            </div>
+            <div class="fd"><label class="lb">Body</label><textarea id="v-ebody" placeholder="Message..." oninput="regen()" style="min-height:54px"></textarea></div>
+          </div>
+          <div id="tf-phone" class="tf">
+            <div class="fd"><label class="lb">Phone Number</label><input type="text" id="v-phone" placeholder="+44 7700 900000" oninput="regen()"></div>
+          </div>
+          <div id="tf-wifi" class="tf">
+            <div class="row2">
+              <div class="fd"><label class="lb">Network Name</label><input type="text" id="v-ssid" placeholder="MyNetwork" oninput="regen()"></div>
+              <div class="fd"><label class="lb">Password</label><input type="text" id="v-wpass" placeholder="password" oninput="regen()"></div>
+            </div>
+            <div class="fd"><label class="lb">Security</label><select id="v-wsec" onchange="regen()"><option value="WPA">WPA/WPA2</option><option value="WEP">WEP</option><option value="nopass">None</option></select></div>
+          </div>
+          <div id="tf-sms" class="tf">
+            <div class="row2">
+              <div class="fd"><label class="lb">Phone</label><input type="text" id="v-snum" placeholder="+44 7700 900000" oninput="regen()"></div>
+              <div class="fd"><label class="lb">Message</label><input type="text" id="v-smsg" placeholder="Hey!" oninput="regen()"></div>
+            </div>
+          </div>
+          <div id="tf-vcard" class="tf">
+            <div class="row2">
+              <div class="fd"><label class="lb">Full Name</label><input type="text" id="v-vname" placeholder="Jane Doe" oninput="regen()"></div>
+              <div class="fd"><label class="lb">Company</label><input type="text" id="v-vorg" placeholder="Acme Inc" oninput="regen()"></div>
+            </div>
+            <div class="row2">
+              <div class="fd"><label class="lb">Phone</label><input type="text" id="v-vtel" placeholder="+1 555 0100" oninput="regen()"></div>
+              <div class="fd"><label class="lb">Email</label><input type="text" id="v-vemail" placeholder="jane@acme.com" oninput="regen()"></div>
+            </div>
+            <div class="row2">
+              <div class="fd"><label class="lb">Website</label><input type="text" id="v-vweb" placeholder="https://acme.com" oninput="regen()"></div>
+              <div class="fd"><label class="lb">Job Title</label><input type="text" id="v-vtitle" placeholder="CEO" oninput="regen()"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODULE SHAPE -->
+      <div class="panel">
+        <div class="ah op" onclick="toggleAcc(this)">
+          <span class="at"><span class="ai">◈</span>Module Shape</span>
+          <span class="ar">▾</span>
+        </div>
+        <div class="ab op">
+          <div class="sg" id="dot-grid">
+            <div class="sc on" data-v="square" onclick="pickChip('dot','dot-grid',this)">
+              <div class="sp"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div></div>
+              <div class="sl">Square</div>
+            </div>
+            <div class="sc" data-v="circle" onclick="pickChip('dot','dot-grid',this)">
+              <div class="sp" style="--pr:50%"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div></div>
+              <div class="sl">Circle</div>
+            </div>
+            <div class="sc" data-v="rounded" onclick="pickChip('dot','dot-grid',this)">
+              <div class="sp" style="--pr:3px"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div><div class="p"></div><div class="p" style="background:transparent"></div><div class="p"></div></div>
+              <div class="sl">Rounded</div>
+            </div>
+            <div class="sc" data-v="diamond" onclick="pickChip('dot','dot-grid',this)">
+              <div class="sp"><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="background:transparent"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)"></div></div>
+              <div class="sl">Diamond</div>
+            </div>
+            <div class="sc" data-v="star" onclick="pickChip('dot','dot-grid',this)">
+              <div class="sp"><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="background:transparent"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></div></div>
+              <div class="sl">Star</div>
+            </div>
+            <div class="sc" data-v="cross" onclick="pickChip('dot','dot-grid',this)">
+              <div class="sp"><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="background:transparent"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div><div class="p" style="background:transparent"></div><div class="p" style="clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)"></div></div>
+              <div class="sl">Cross</div>
+            </div>
+            <div class="sc" data-v="bar-h" onclick="pickChip('dot','dot-grid',this)">
+              <div class="sp" style="gap:3px 1.5px"><div class="p" style="border-radius:1px;grid-column:span 5;height:40%"></div><div class="p" style="border-radius:1px;grid-column:span 5;height:40%"></div><div class="p" style="border-radius:1px;grid-column:span 5;height:40%"></div><div class="p" style="border-radius:1px;grid-column:span 5;height:40%"></div><div class="p" style="border-radius:1px;grid-column:span 5;height:40%"></div></div>
+              <div class="sl">Bars H</div>
+            </div>
+            <div class="sc" data-v="bar-v" onclick="pickChip('dot','dot-grid',this)">
+              <div class="sp" style="gap:1.5px 3px"><div class="p" style="border-radius:1px;grid-row:span 5;width:40%"></div><div class="p" style="border-radius:1px;grid-row:span 5;width:40%"></div><div class="p" style="border-radius:1px;grid-row:span 5;width:40%"></div><div class="p" style="border-radius:1px;grid-row:span 5;width:40%"></div><div class="p" style="border-radius:1px;grid-row:span 5;width:40%"></div></div>
+              <div class="sl">Bars V</div>
+            </div>
+          </div>
+
+          <div class="sd">Corner Eye Style</div>
+          <div class="eg" id="eye-grid">
+            <div class="ec2 on" data-v="square" onclick="pickChip('eye','eye-grid',this)">
+              <svg viewBox="0 0 32 32" width="32" height="32" fill="currentColor"><rect x="1" y="1" width="30" height="30"/><rect x="5" y="5" width="22" height="22" fill="white"/><rect x="10" y="10" width="12" height="12"/></svg>
+              <div class="sl">Square</div>
+            </div>
+            <div class="ec2" data-v="rounded" onclick="pickChip('eye','eye-grid',this)">
+              <svg viewBox="0 0 32 32" width="32" height="32" fill="currentColor"><rect x="1" y="1" width="30" height="30" rx="6"/><rect x="5" y="5" width="22" height="22" fill="white" rx="4"/><rect x="10" y="10" width="12" height="12" rx="3"/></svg>
+              <div class="sl">Rounded</div>
+            </div>
+            <div class="ec2" data-v="circle" onclick="pickChip('eye','eye-grid',this)">
+              <svg viewBox="0 0 32 32" width="32" height="32" fill="currentColor"><circle cx="16" cy="16" r="15"/><circle cx="16" cy="16" r="11" fill="white"/><circle cx="16" cy="16" r="6"/></svg>
+              <div class="sl">Circle</div>
+            </div>
+            <div class="ec2" data-v="leaf" onclick="pickChip('eye','eye-grid',this)">
+              <svg viewBox="0 0 32 32" width="32" height="32" fill="currentColor"><path d="M16,1 C28,1 31,4 31,16 C31,28 28,31 16,31 C4,31 1,28 1,16 C1,4 4,1 16,1Z"/><rect x="5" y="5" width="22" height="22" fill="white" rx="8"/><circle cx="16" cy="16" r="6"/></svg>
+              <div class="sl">Leaf</div>
+            </div>
+            <div class="ec2" data-v="diamond" onclick="pickChip('eye','eye-grid',this)">
+              <svg viewBox="0 0 32 32" width="32" height="32" fill="currentColor"><polygon points="16,1 31,16 16,31 1,16"/><polygon points="16,8 24,16 16,24 8,16" fill="white"/><polygon points="16,12 20,16 16,20 12,16"/></svg>
+              <div class="sl">Diamond</div>
+            </div>
+            <div class="ec2" data-v="shield" onclick="pickChip('eye','eye-grid',this)">
+              <svg viewBox="0 0 32 32" width="32" height="32" fill="currentColor"><path d="M1,1h30v20q0,10-15,11Q1,31 1,21Z"/><path d="M5,5h22v15q0,7-11,8Q5,27 5,20Z" fill="white"/><rect x="10" y="10" width="12" height="10" rx="2"/></svg>
+              <div class="sl">Shield</div>
+            </div>
+          </div>
+
+          <div class="sd">Module Fill Size</div>
+          <div class="rf">
+            <div class="rh"><label class="lb" style="margin:0">Fill amount</label><span class="rv" id="rv-msz">90%</span></div>
+            <input type="range" id="r-msz" min="40" max="100" value="90" oninput="document.getElementById('rv-msz').textContent=this.value+'%';regen()">
+          </div>
+        </div>
+      </div>
+
+      <!-- COLOURS -->
+      <div class="panel">
+        <div class="ah op" onclick="toggleAcc(this)">
+          <span class="at"><span class="ai">◉</span>Colours</span>
+          <span class="ar">▾</span>
+        </div>
+        <div class="ab op">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);margin-bottom:8px">Quick Presets</div>
+          <div class="pr-row" id="prow">
+            <div class="pr on" style="background:#1c1814" title="Classic" data-preset="classic" onclick="applyPreset(this,'#1c1814','#f7f3ec','#1c1814','#1c1814')"></div>
+            <div class="pr" style="background:linear-gradient(135deg,#b8894a,#f0d9b5)" title="Amber" data-preset="amber" onclick="applyPreset(this,'#7a4f1a','#fdf8f0','#b8894a','#b8894a')"></div>
+            <div class="pr" style="background:linear-gradient(135deg,#2a7c6f,#3da892)" title="Teal" data-preset="teal" onclick="applyPreset(this,'#1a4f46','#f0faf8','#2a7c6f','#3da892')"></div>
+            <div class="pr" style="background:linear-gradient(135deg,#7c3d8a,#b878c8)" title="Violet" data-preset="violet" onclick="applyPreset(this,'#4a1a54','#faf5fc','#7c3d8a','#b878c8')"></div>
+            <div class="pr" style="background:linear-gradient(135deg,#c0392b,#e74c3c)" title="Crimson" data-preset="crimson" onclick="applyPreset(this,'#7a1c14','#fff5f4','#c0392b','#c0392b')"></div>
+            <div class="pr" style="background:#0f1923" title="Night" data-preset="night" onclick="applyPreset(this,'#e8f0f8','#0f1923','#4a9eff','#4a9eff')"></div>
+            <div class="pr" style="background:linear-gradient(135deg,#1a3a1a,#2d5a2d)" title="Forest" data-preset="forest" onclick="applyPreset(this,'#0f2a0f','#f4faf4','#2d5a2d','#4a9a4a')"></div>
+            <div class="pr" style="background:linear-gradient(135deg,#8a6a2a,#c4a04a)" title="Gold" data-preset="gold" onclick="applyPreset(this,'#3a2a00','#fffff0','#8a6a2a','#c4a04a')"></div>
+            <div class="pr" style="background:linear-gradient(135deg,#1a1a2e,#e94560)" title="Neon" data-preset="neon" onclick="applyPreset(this,'#e94560','#1a1a2e','#e94560','#16213e')"></div>
+          </div>
+
+          <div class="sd">Base Colors</div>
+          <div class="cpair">
+            <div class="cb"><div class="sw" id="sw-fg" style="background:#1c1814"><input type="color" id="c-fg" value="#1c1814" oninput="syncSw('fg');regen()"></div><div><div class="cl">Foreground</div><div class="cv" id="cv-fg">#1c1814</div></div></div>
+            <div class="cb"><div class="sw" id="sw-bg" style="background:#f7f3ec"><input type="color" id="c-bg" value="#f7f3ec" oninput="syncSw('bg');regen()"></div><div><div class="cl">Background</div><div class="cv" id="cv-bg">#f7f3ec</div></div></div>
+          </div>
+
+          <div class="tr"><span class="tl">Gradient on modules</span><label class="tog"><input type="checkbox" id="t-grad" onchange="S.grad=this.checked;g('go').classList.toggle('hid',!this.checked);regen()"><div class="tt2"></div><div class="tn"></div></label></div>
+          <div id="go" class="hid" style="padding-top:12px">
+            <div class="cg" id="gtype" style="margin-bottom:10px">
+              <div class="ch on" data-v="linear-tb" onclick="pickChip('gradType','gtype',this)">Top→Bot</div>
+              <div class="ch" data-v="linear-lr" onclick="pickChip('gradType','gtype',this)">Left→Right</div>
+              <div class="ch" data-v="linear-diag" onclick="pickChip('gradType','gtype',this)">Diagonal</div>
+              <div class="ch" data-v="radial" onclick="pickChip('gradType','gtype',this)">Radial</div>
+              <div class="ch" data-v="conic" onclick="pickChip('gradType','gtype',this)">Conic</div>
+            </div>
+            <div class="cpair">
+              <div class="cb"><div class="sw" id="sw-g1" style="background:#1c1814"><input type="color" id="c-g1" value="#1c1814" oninput="syncSw('g1');regen()"></div><div><div class="cl">Grad Start</div><div class="cv" id="cv-g1">#1c1814</div></div></div>
+              <div class="cb"><div class="sw" id="sw-g2" style="background:#b8894a"><input type="color" id="c-g2" value="#b8894a" oninput="syncSw('g2');regen()"></div><div><div class="cl">Grad End</div><div class="cv" id="cv-g2">#b8894a</div></div></div>
+            </div>
+          </div>
+
+          <div class="tr"><span class="tl">Custom eye colours</span><label class="tog"><input type="checkbox" id="t-eyec" onchange="S.eyeCol=this.checked;g('eyeco').classList.toggle('hid',!this.checked);regen()"><div class="tt2"></div><div class="tn"></div></label></div>
+          <div id="eyeco" class="hid" style="padding-top:12px">
+            <div class="cpair">
+              <div class="cb"><div class="sw" id="sw-eo" style="background:#1c1814"><input type="color" id="c-eo" value="#1c1814" oninput="syncSw('eo');regen()"></div><div><div class="cl">Eye Outer</div><div class="cv" id="cv-eo">#1c1814</div></div></div>
+              <div class="cb"><div class="sw" id="sw-ei" style="background:#1c1814"><input type="color" id="c-ei" value="#1c1814" oninput="syncSw('ei');regen()"></div><div><div class="cl">Eye Inner</div><div class="cv" id="cv-ei">#1c1814</div></div></div>
+            </div>
+          </div>
+
+          <div class="tr"><span class="tl">Transparent background</span><label class="tog"><input type="checkbox" id="t-transp" onchange="regen()"><div class="tt2"></div><div class="tn"></div></label></div>
+          <div class="tr"><span class="tl">Invert colours</span><label class="tog"><input type="checkbox" id="t-inv" onchange="regen()"><div class="tt2"></div><div class="tn"></div></label></div>
+        </div>
+      </div>
+
+      <!-- LOGO -->
+      <div class="panel">
+        <div class="ah op" onclick="toggleAcc(this)">
+          <span class="at"><span class="ai">⊕</span>Logo / Image</span>
+          <span class="ar">▾</span>
+        </div>
+        <div class="ab op">
+          <div class="dz" id="dz">
+            <input type="file" accept="image/*" id="logo-inp" onchange="onLogo(event)">
+            <div class="di">⊕</div>
+            <div class="dt"><strong>Click to upload</strong> or drag & drop<br>PNG · JPG · SVG · GIF · WebP</div>
+          </div>
+          <div class="lr" id="lrow">
+            <img id="lthumb" class="li" src="" alt="">
+            <div class="lf" id="lfname"></div>
+            <button class="br" onclick="rmLogo()">Remove</button>
+          </div>
+          <div id="lopts" class="hid">
+            <div class="sd">Background Shape</div>
+            <div class="cg" id="lshape">
+              <div class="ch on" data-v="rounded" onclick="pickChip('logoShape','lshape',this)">Rounded</div>
+              <div class="ch" data-v="circle" onclick="pickChip('logoShape','lshape',this)">Circle</div>
+              <div class="ch" data-v="square" onclick="pickChip('logoShape','lshape',this)">Square</div>
+              <div class="ch" data-v="none" onclick="pickChip('logoShape','lshape',this)">No BG</div>
+            </div>
+            <div class="sd">Logo Background</div>
+            <div class="cg" id="lbgtype">
+              <div class="ch on" data-v="white" onclick="pickLogoBg(this)">White</div>
+              <div class="ch" data-v="custom" onclick="pickLogoBg(this)">Custom</div>
+              <div class="ch" data-v="none" onclick="pickLogoBg(this)">None</div>
+            </div>
+            <div id="lbgcol" class="hid" style="margin-top:10px">
+              <div class="cb"><div class="sw" id="sw-lbg" style="background:#ffffff"><input type="color" id="c-lbg" value="#ffffff" oninput="syncSw('lbg');regen()"></div><div><div class="cl">BG Colour</div><div class="cv" id="cv-lbg">#ffffff</div></div></div>
+            </div>
+            <div class="rf" style="margin-top:14px">
+              <div class="rh"><label class="lb" style="margin:0">Logo Size</label><span class="rv" id="rv-lsz">25%</span></div>
+              <input type="range" id="r-lsz" min="8" max="48" value="25" oninput="document.getElementById('rv-lsz').textContent=this.value+'%';regen()">
+            </div>
+            <div class="rf">
+              <div class="rh"><label class="lb" style="margin:0">Logo Padding</label><span class="rv" id="rv-lpad">8px</span></div>
+              <input type="range" id="r-lpad" min="0" max="24" value="8" oninput="document.getElementById('rv-lpad').textContent=this.value+'px';regen()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FRAME & EXTRAS -->
+      <div class="panel">
+        <div class="ah" onclick="toggleAcc(this)">
+          <span class="at"><span class="ai">⬡</span>Frame & Extras</span>
+          <span class="ar">▾</span>
+        </div>
+        <div class="ab">
+          <div class="sd" style="margin-top:0">Frame Style</div>
+          <div class="cg" id="ftype">
+            <div class="ch on" data-v="none" onclick="pickChip('frame','ftype',this);g('fopts').classList.toggle('hid',S.frame==='none')">None</div>
+            <div class="ch" data-v="thin" onclick="pickChip('frame','ftype',this);g('fopts').classList.toggle('hid',false)">Thin</div>
+            <div class="ch" data-v="thick" onclick="pickChip('frame','ftype',this);g('fopts').classList.toggle('hid',false)">Thick</div>
+            <div class="ch" data-v="rounded" onclick="pickChip('frame','ftype',this);g('fopts').classList.toggle('hid',false)">Rounded</div>
+            <div class="ch" data-v="dashed" onclick="pickChip('frame','ftype',this);g('fopts').classList.toggle('hid',false)">Dashed</div>
+            <div class="ch" data-v="double" onclick="pickChip('frame','ftype',this);g('fopts').classList.toggle('hid',false)">Double</div>
+          </div>
+          <div id="fopts" class="hid" style="margin-top:12px">
+            <div class="cpair">
+              <div class="cb"><div class="sw" id="sw-fc" style="background:#1c1814"><input type="color" id="c-fc" value="#1c1814" oninput="syncSw('fc');regen()"></div><div><div class="cl">Frame Colour</div><div class="cv" id="cv-fc">#1c1814</div></div></div>
+              <div></div>
+            </div>
+            <div class="rf" style="margin-top:4px">
+              <div class="rh"><label class="lb" style="margin:0">Frame Width</label><span class="rv" id="rv-fw">16px</span></div>
+              <input type="range" id="r-fw" min="4" max="44" value="16" oninput="document.getElementById('rv-fw').textContent=this.value+'px';regen()">
+            </div>
+          </div>
+
+          <div class="sd">Background Pattern</div>
+          <div class="cg" id="bgpat">
+            <div class="ch on" data-v="none" onclick="pickChip('bgPat','bgpat',this)">Solid</div>
+            <div class="ch" data-v="dots" onclick="pickChip('bgPat','bgpat',this)">Dots</div>
+            <div class="ch" data-v="lines" onclick="pickChip('bgPat','bgpat',this)">Lines</div>
+            <div class="ch" data-v="grid" onclick="pickChip('bgPat','bgpat',this)">Grid</div>
+            <div class="ch" data-v="diag" onclick="pickChip('bgPat','bgpat',this)">Diagonal</div>
+          </div>
+
+          <div class="sd">Caption Label</div>
+          <div class="tr" style="padding-top:0"><span class="tl">Show caption</span><label class="tog"><input type="checkbox" id="t-cap" onchange="regen()"><div class="tt2"></div><div class="tn"></div></label></div>
+          <div class="fd" style="margin-top:8px"><label class="lb">Caption Text</label><input type="text" id="v-cap" value="SCAN ME" oninput="regen()"></div>
+          <div class="cg" id="capalign">
+            <div class="ch on" data-v="center" onclick="pickChip('capAlign','capalign',this)">Centre</div>
+            <div class="ch" data-v="left" onclick="pickChip('capAlign','capalign',this)">Left</div>
+            <div class="ch" data-v="right" onclick="pickChip('capAlign','capalign',this)">Right</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADVANCED -->
+      <div class="panel">
+        <div class="ah" onclick="toggleAcc(this)">
+          <span class="at"><span class="ai">⚙</span>Advanced</span>
+          <span class="ar">▾</span>
+        </div>
+        <div class="ab">
+          <div class="sd" style="margin-top:0">Error Correction</div>
+          <div class="cg" id="ecg">
+            <div class="ch" data-v="L" onclick="pickChip('ec','ecg',this)">L — 7%</div>
+            <div class="ch" data-v="M" onclick="pickChip('ec','ecg',this)">M — 15%</div>
+            <div class="ch on" data-v="Q" onclick="pickChip('ec','ecg',this)">Q — 25%</div>
+            <div class="ch" data-v="H" onclick="pickChip('ec','ecg',this)">H — 30%</div>
+          </div>
+          <div class="rf" style="margin-top:16px">
+            <div class="rh"><label class="lb" style="margin:0">Output Size</label><span class="rv" id="rv-sz">420px</span></div>
+            <input type="range" id="r-sz" min="150" max="900" step="10" value="420" oninput="document.getElementById('rv-sz').textContent=this.value+'px';regen()">
+          </div>
+          <div class="rf">
+            <div class="rh"><label class="lb" style="margin:0">Quiet Zone</label><span class="rv" id="rv-qz">4</span></div>
+            <input type="range" id="r-qz" min="0" max="10" value="4" oninput="document.getElementById('rv-qz').textContent=this.value;regen()">
+          </div>
+          <div class="rf">
+            <div class="rh"><label class="lb" style="margin:0">Module Gap</label><span class="rv" id="rv-gap">0px</span></div>
+            <input type="range" id="r-gap" min="0" max="4" step="0.25" value="0" oninput="document.getElementById('rv-gap').textContent=this.value+'px';regen()">
+          </div>
+          <div class="rf">
+            <div class="rh"><label class="lb" style="margin:0">Card Corner Radius</label><span class="rv" id="rv-cr">0px</span></div>
+            <input type="range" id="r-cr" min="0" max="80" value="0" oninput="document.getElementById('rv-cr').textContent=this.value+'px';regen()">
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /ctrl -->
+
+    <!-- PREVIEW -->
+    <div class="pvp">
+      <div class="pvi">
+        <div class="pvt">
+          <div class="pvl"><div class="ld"></div>Live Preview</div>
+          <div class="pvv" id="pvv">—</div>
+        </div>
+        <div class="cw"><canvas id="qrc"></canvas></div>
+        <div class="pst">
+          <div class="st"><span class="sv2" id="st-px">—</span><div class="sk">Size</div></div>
+          <div class="st"><span class="sv2" id="st-ver">—</span><div class="sk">Version</div></div>
+          <div class="st"><span class="sv2" id="st-ec">Q</span><div class="sk">EC Level</div></div>
+        </div>
+        <div class="pa">
+          <button class="bdl" onclick="dlPng()">↓ Download PNG</button>
+          <button class="bsm" onclick="dlJpg()">JPG</button>
+          <button class="bsm" onclick="dlSvg()">SVG</button>
+          <button class="bsm" onclick="copyImg()" title="Copy to clipboard">⎘</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── HELPERS ──────────────────────────────
+const g = id => document.getElementById(id);
+const gv = id => (g(id)||{value:''}).value.trim();
+
+// ── STATE ─────────────────────────────────
+const S = {
+  type:'url', dot:'square', eye:'square', ec:'Q',
+  grad:false, gradType:'linear-tb', eyeCol:false,
+  logoImg:null, logoShape:'rounded', logoBg:'white',
+  frame:'none', bgPat:'none', capAlign:'center',
+  _t:null
+};
+
+// ── CONTENT ──────────────────────────────
+function getData() {
+  switch(S.type) {
+    case 'url':   return gv('v-url') || 'https://example.com';
+    case 'text':  return gv('v-text') || 'Hello World';
+    case 'email': {
+      let s = 'mailto:' + gv('v-email');
+      const p = [];
+      if(gv('v-esubj')) p.push('subject='+encodeURIComponent(gv('v-esubj')));
+      if(gv('v-ebody')) p.push('body='+encodeURIComponent(gv('v-ebody')));
+      return s + (p.length ? '?'+p.join('&') : '');
+    }
+    case 'phone': return 'tel:'+gv('v-phone');
+    case 'wifi':  return `WIFI:T:${gv('v-wsec')};S:${gv('v-ssid')};P:${gv('v-wpass')};;`;
+    case 'sms':   return `SMSTO:${gv('v-snum')}:${gv('v-smsg')}`;
+    case 'vcard': return `BEGIN:VCARD\nVERSION:3.0\nFN:${gv('v-vname')}\nORG:${gv('v-vorg')}\nTITLE:${gv('v-vtitle')}\nTEL:${gv('v-vtel')}\nEMAIL:${gv('v-vemail')}\nURL:${gv('v-vweb')}\nEND:VCARD`;
+    default: return 'https://example.com';
+  }
+}
+
+// ── DRAW ─────────────────────────────────
+function regen() { clearTimeout(S._t); S._t = setTimeout(draw, 60); }
+
+function draw() {
+  const data = getData();
+  let qr;
+  try { qr = qrcode(0, S.ec); qr.addData(data); qr.make(); }
+  catch(e) { try { qr = qrcode(0,'M'); qr.addData(data.substring(0,200)); qr.make(); } catch(e2){ return; } }
+
+  const N       = qr.getModuleCount();
+  const size    = +g('r-sz').value;
+  const margin  = +g('r-qz').value;
+  const gap     = +g('r-gap').value;
+  const fillPct = +g('r-msz').value / 100;
+  const cr      = +g('r-cr').value;
+  const showCap = g('t-cap').checked;
+  const capTxt  = gv('v-cap');
+  const capH    = (showCap && capTxt) ? 40 : 0;
+  const fw      = +g('r-fw').value;
+  const fp      = S.frame !== 'none' ? fw : 0;
+
+  let fg = g('c-fg').value, bg = g('c-bg').value;
+  if (g('t-inv').checked) { [fg, bg] = [bg, fg]; }
+
+  const eyeOuter = S.eyeCol ? g('c-eo').value : fg;
+  const eyeInner = S.eyeCol ? g('c-ei').value : fg;
+  const transp   = g('t-transp').checked;
+
+  const W = size + fp*2, H = size + fp*2 + capH;
+  const cnv = g('qrc');
+  cnv.width = W; cnv.height = H;
+  const ctx = cnv.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // ── Background
+  ctx.save();
+  if (cr > 0) { rrectPath(ctx,0,0,W,H-capH,cr); ctx.clip(); }
+  if (!transp) {
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H - capH);
+    drawBgPat(ctx, bg, fg, 0, 0, W, H - capH);
+  }
+  ctx.restore();
+
+  // ── Frame
+  if (S.frame !== 'none') drawFrame(ctx, fw, g('c-fc').value, W, H-capH, cr);
+
+  // ── Cell maths
+  const cellSize = size / (N + margin*2);
+  const ox = fp + margin*cellSize;
+  const oy = fp + margin*cellSize;
+
+  // ── Gradient
+  let fill;
+  if (S.grad) {
+    const g1=g('c-g1').value, g2=g('c-g2').value;
+    const qw=N*cellSize, qh=N*cellSize;
+    switch(S.gradType) {
+      case 'linear-tb':   fill=ctx.createLinearGradient(ox,oy,ox,oy+qh); break;
+      case 'linear-lr':   fill=ctx.createLinearGradient(ox,oy,ox+qw,oy); break;
+      case 'linear-diag': fill=ctx.createLinearGradient(ox,oy,ox+qw,oy+qh); break;
+      case 'radial':      fill=ctx.createRadialGradient(ox+qw/2,oy+qh/2,0,ox+qw/2,oy+qh/2,qw*0.7); break;
+      case 'conic':       fill=ctx.createConicGradient(0,ox+qw/2,oy+qh/2); break;
+      default:            fill=ctx.createLinearGradient(ox,oy,ox,oy+qh);
+    }
+    fill.addColorStop(0,g1); fill.addColorStop(1,g2);
+  } else {
+    fill = fg;
+  }
+
+  // Finder pattern positions [row, col] of top-left corner
+  const FP = [[0,0],[0,N-7],[N-7,0]];
+  function inFP(r,c) {
+    for(const[fr,fc] of FP) if(r>=fr&&r<fr+7&&c>=fc&&c<fc+7) return true;
+    return false;
+  }
+
+  // ── Draw data modules
+  for (let r=0; r<N; r++) {
+    for (let c=0; c<N; c++) {
+      if (!qr.isDark(r,c) || inFP(r,c)) continue;
+      const cs = cellSize * fillPct - gap;
+      const pad = (cellSize - cs) / 2;
+      ctx.fillStyle = fill;
+      drawMod(ctx, ox+c*cellSize+pad, oy+r*cellSize+pad, cs, S.dot);
+    }
+  }
+
+  // ── Draw finder eyes
+  const bgForEye = transp ? 'rgba(0,0,0,0)' : bg;
+  for (const [fr,fc] of FP) {
+    drawEye(ctx, ox+fc*cellSize, oy+fr*cellSize, cellSize, S.eye, eyeOuter, eyeInner, bgForEye);
+  }
+
+  // ── Draw logo
+  if (S.logoImg) {
+    const sp = +g('r-lsz').value/100;
+    const lp = +g('r-lpad').value;
+    const lw = N*cellSize*sp, lh=lw;
+    const lx = ox+(N*cellSize-lw)/2, ly = oy+(N*cellSize-lh)/2;
+    ctx.save();
+    if (S.logoBg !== 'none' && S.logoShape !== 'none') {
+      const bc = S.logoBg==='white' ? '#fff' : g('c-lbg').value;
+      const bx=lx-lp, by=ly-lp, bw=lw+lp*2, bh=lh+lp*2;
+      ctx.fillStyle=bc;
+      if(S.logoShape==='circle'){ctx.beginPath();ctx.arc(bx+bw/2,by+bh/2,bw/2,0,Math.PI*2);ctx.fill();}
+      else if(S.logoShape==='rounded'){rrectPath(ctx,bx,by,bw,bh,bw*.18);ctx.fill();}
+      else{ctx.fillRect(bx,by,bw,bh);}
+    }
+    if (S.logoShape !== 'none') {
+      ctx.beginPath();
+      if(S.logoShape==='circle'){ctx.arc(lx+lw/2,ly+lh/2,lw/2,0,Math.PI*2);}
+      else if(S.logoShape==='rounded'){rrectPath(ctx,lx,ly,lw,lh,lw*.18);}
+      else{ctx.rect(lx,ly,lw,lh);}
+      ctx.clip();
+    }
+    ctx.drawImage(S.logoImg,lx,ly,lw,lh);
+    ctx.restore();
+  }
+
+  // ── Caption
+  if (showCap && capTxt) {
+    const cy = H - capH/2 + 7;
+    ctx.fillStyle = fg;
+    ctx.font = `600 ${Math.round(capH*.42)}px 'Cormorant Garamond', Georgia, serif`;
+    ctx.textAlign = S.capAlign;
+    const tx = S.capAlign==='center' ? W/2 : S.capAlign==='left' ? fp+12 : W-fp-12;
+    ctx.fillText(capTxt, tx, cy);
+  }
+
+  // ── Stats
+  g('st-px').textContent = `${W}×${H}`;
+  g('st-ver').textContent = `v${qr.getTypeNumber()||'—'}`;
+  g('st-ec').textContent  = S.ec;
+  g('pvv').textContent    = `QR v${qr.getTypeNumber()} · ${N}×${N}`;
+}
+
+// ── Module shapes ─────────────────────────
+function drawMod(ctx, x, y, s, style) {
+  switch(style) {
+    case 'circle':
+      ctx.beginPath(); ctx.arc(x+s/2,y+s/2,s/2,0,Math.PI*2); ctx.fill(); break;
+    case 'rounded':
+      rrectPath(ctx,x,y,s,s,s*.32); ctx.fill(); break;
+    case 'diamond':
+      ctx.beginPath(); ctx.moveTo(x+s/2,y); ctx.lineTo(x+s,y+s/2); ctx.lineTo(x+s/2,y+s); ctx.lineTo(x,y+s/2); ctx.closePath(); ctx.fill(); break;
+    case 'star': {
+      const cx=x+s/2,cy=y+s/2,ro=s/2*.95,ri=s/2*.38;
+      ctx.beginPath();
+      for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?ri:ro;i?ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}
+      ctx.closePath(); ctx.fill(); break;
+    }
+    case 'cross':
+      const t=s*.32;ctx.beginPath();ctx.rect(x+t,y,t,s);ctx.rect(x,y+t,s,t);ctx.fill(); break;
+    case 'bar-h':
+      ctx.fillRect(x, y+s*.2, s, s*.6); break;
+    case 'bar-v':
+      ctx.fillRect(x+s*.2, y, s*.6, s); break;
+    default:
+      ctx.fillRect(x,y,s,s);
+  }
+}
+
+// ── Eye shapes ───────────────────────────
+function drawEye(ctx, x, y, cs, style, outerCol, innerCol, bgCol) {
+  // outer 7×7
+  ctx.fillStyle = outerCol;
+  eyeShape(ctx, x, y, 7*cs, style); ctx.fill();
+  // ring gap 5×5
+  ctx.fillStyle = bgCol;
+  eyeShape(ctx, x+cs, y+cs, 5*cs, style); ctx.fill();
+  // inner dot 3×3
+  ctx.fillStyle = innerCol;
+  eyeShape(ctx, x+2*cs, y+2*cs, 3*cs, style); ctx.fill();
+}
+
+function eyeShape(ctx, x, y, s, style) {
+  ctx.beginPath();
+  switch(style) {
+    case 'circle':
+      ctx.arc(x+s/2,y+s/2,s/2,0,Math.PI*2); break;
+    case 'rounded':
+      rrectPath(ctx,x,y,s,s,s*.2); break;
+    case 'leaf':
+      ctx.moveTo(x+s/2,y);
+      ctx.bezierCurveTo(x+s,y,x+s,y+s,x+s/2,y+s);
+      ctx.bezierCurveTo(x,y+s,x,y,x+s/2,y);
+      ctx.closePath(); break;
+    case 'diamond':
+      ctx.moveTo(x+s/2,y); ctx.lineTo(x+s,y+s/2); ctx.lineTo(x+s/2,y+s); ctx.lineTo(x,y+s/2); ctx.closePath(); break;
+    case 'shield':
+      ctx.moveTo(x,y); ctx.lineTo(x+s,y); ctx.lineTo(x+s,y+s*.65);
+      ctx.quadraticCurveTo(x+s,y+s,x+s/2,y+s);
+      ctx.quadraticCurveTo(x,y+s,x,y+s*.65); ctx.closePath(); break;
+    default:
+      ctx.rect(x,y,s,s);
+  }
+}
+
+// ── Frame drawing ─────────────────────────
+function drawFrame(ctx, fw, color, W, H, cr) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  const style = S.frame;
+  if(style==='thin') ctx.lineWidth = Math.max(1,fw*.3);
+  else if(style==='thick') ctx.lineWidth = fw;
+  else ctx.lineWidth = fw*.5;
+  if(style==='dashed') ctx.setLineDash([fw,fw*.6]);
+  else ctx.setLineDash([]);
+  const r = style==='rounded' ? Math.max(cr, fw*1.5) : cr;
+  const i = ctx.lineWidth/2;
+  rrectPath(ctx,i,i,W-i*2,H-i*2,r); ctx.stroke();
+  if(style==='double'){
+    ctx.lineWidth=fw*.2; const i2=fw*.75;
+    rrectPath(ctx,i2,i2,W-i2*2,H-i2*2,Math.max(0,r-i2)); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ── BG patterns ───────────────────────────
+function drawBgPat(ctx, bg, fg, x,y,w,h) {
+  if(S.bgPat==='none') return;
+  const pc = document.createElement('canvas'); pc.width=pc.height=16;
+  const c = pc.getContext('2d');
+  const col = hexA(fg,.07);
+  switch(S.bgPat) {
+    case 'dots':  c.fillStyle=col;c.beginPath();c.arc(8,8,1.5,0,Math.PI*2);c.fill(); break;
+    case 'lines': c.strokeStyle=col;c.lineWidth=.8;c.beginPath();c.moveTo(0,8);c.lineTo(16,8);c.stroke(); break;
+    case 'grid':  c.strokeStyle=col;c.lineWidth=.5;c.strokeRect(.5,.5,15,15); break;
+    case 'diag':  c.strokeStyle=col;c.lineWidth=1;c.beginPath();c.moveTo(0,16);c.lineTo(16,0);c.stroke(); break;
+  }
+  const pat = ctx.createPattern(pc,'repeat');
+  if(pat){ctx.fillStyle=pat;ctx.fillRect(x,y,w,h);}
+}
+
+// ── Utils ─────────────────────────────────
+function rrectPath(ctx,x,y,w,h,r) {
+  r=Math.min(Math.abs(r),w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+function hexA(hex,a) {
+  const r=parseInt(hex.slice(1,3),16),gv=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${gv},${b},${a})`;
+}
+
+// ── UI ───────────────────────────────────
+function toggleAcc(h) {
+  const b=h.nextElementSibling;
+  const op=b.classList.contains('op');
+  b.classList.toggle('op',!op); h.classList.toggle('op',!op);
+}
+
+function setType(type, el) {
+  S.type=type;
+  document.querySelectorAll('.tt').forEach(t=>t.classList.remove('on')); el.classList.add('on');
+  document.querySelectorAll('.tf').forEach(f=>f.classList.remove('on')); g('tf-'+type).classList.add('on');
+  regen();
+}
+
+// Generic chip picker: updates S[key], toggles .on in group
+function pickChip(key, groupId, el) {
+  document.querySelectorAll('#'+groupId+' .ch, #'+groupId+' .ec2, #'+groupId+' .sc').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  S[key] = el.dataset.v;
+  regen();
+}
+
+function applyPreset(el, fg, bg, eo, ei) {
+  document.querySelectorAll('#prow .pr').forEach(e=>e.classList.remove('on')); el.classList.add('on');
+  const set = (id, val) => { g('c-'+id).value=val; g('sw-'+id).style.background=val; g('cv-'+id).textContent=val; };
+  set('fg',fg); set('bg',bg); set('eo',eo); set('ei',ei);
+  regen();
+}
+
+function syncSw(k) {
+  const v=g('c-'+k).value;
+  g('sw-'+k).style.background=v; g('cv-'+k).textContent=v;
+}
+
+function onLogo(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      S.logoImg=img;
+      g('lthumb').src=ev.target.result; g('lfname').textContent=file.name;
+      g('lrow').classList.add('on'); g('dz').classList.add('hf'); g('lopts').classList.remove('hid');
+      // Auto-H EC if logo present
+      if(S.ec==='L'||S.ec==='M'){
+        document.querySelectorAll('#ecg .ch').forEach(e=>e.classList.remove('on'));
+        document.querySelector('#ecg .ch[data-v="H"]').classList.add('on'); S.ec='H';
+      }
+      regen();
+    };
+    img.src=ev.target.result;
+  };
+  rd.readAsDataURL(file);
+}
+
+function rmLogo() {
+  S.logoImg=null; g('lrow').classList.remove('on'); g('dz').classList.remove('hf');
+  g('lopts').classList.add('hid'); g('logo-inp').value=''; regen();
+}
+
+function pickLogoBg(el) {
+  document.querySelectorAll('#lbgtype .ch').forEach(e=>e.classList.remove('on')); el.classList.add('on');
+  S.logoBg=el.dataset.v;
+  g('lbgcol').classList.toggle('hid', el.dataset.v!=='custom');
+  regen();
+}
+
+// Drag & drop
+const dz=g('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='var(--gold)';});
+dz.addEventListener('dragleave',()=>dz.style.borderColor='');
+dz.addEventListener('drop',e=>{
+  e.preventDefault(); dz.style.borderColor='';
+  const f=e.dataTransfer.files[0];
+  if(!f||!f.type.startsWith('image/')) return;
+  const dt=new DataTransfer(); dt.items.add(f); g('logo-inp').files=dt.files;
+  onLogo({target:g('logo-inp')});
+});
+
+// ── EXPORTS ──────────────────────────────
+function dlPng() { dlAs('image/png','qr-code.png'); }
+function dlJpg() { dlAs('image/jpeg','qr-code.jpg'); }
+function dlAs(mime, name) {
+  const a=document.createElement('a'); a.download=name; a.href=g('qrc').toDataURL(mime,.95); a.click(); toast('Downloaded!');
+}
+function dlSvg() {
+  const c=g('qrc'), d=c.toDataURL('image/png');
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${c.width}" height="${c.height}"><image href="${d}" width="${c.width}" height="${c.height}"/></svg>`;
+  const a=document.createElement('a'); a.download='qr-code.svg'; a.href=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'})); a.click(); toast('SVG downloaded!');
+}
+async function copyImg() {
+  g('qrc').toBlob(async b=>{
+    try { await navigator.clipboard.write([new ClipboardItem({'image/png':b})]); toast('Copied!'); }
+    catch { toast('Use PNG download instead'); }
+  });
+}
+function toast(msg) {
+  const t=g('toast'); t.textContent=msg; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2500);
+}
+
+// ── INIT ─────────────────────────────────
+draw();
+</script>
+</body>
+</html>
