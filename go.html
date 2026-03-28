@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redirecting…</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { display: grid; min-height: 100vh; place-items: center; padding: 1.5rem; }
+    .card { text-align: center; max-width: 28rem; }
+    .err { color: var(--danger); }
+    code { font-size: 0.95em; }
+  </style>
+</head>
+<body>
+  <div class="card panel">
+    <p id="status">Looking up link…</p>
+    <p id="hint" class="muted small" hidden>If you are not redirected, <a id="manual" href="#">open the destination</a>.</p>
+  </div>
+  <script>
+    (function () {
+      var raw = (location.hash || '').replace(/^#/, '').trim();
+      var key = '';
+      try {
+        key = decodeURIComponent(raw).toLowerCase();
+      } catch (e) {
+        key = raw.toLowerCase();
+      }
+      var statusEl = document.getElementById('status');
+      var hintEl = document.getElementById('hint');
+      var manualEl = document.getElementById('manual');
+
+      function fail(msg) {
+        statusEl.innerHTML = '<span class="err">' + msg + '</span>';
+        statusEl.classList.add('err');
+        document.title = 'Link not found';
+      }
+
+      if (!key) {
+        fail('Missing short code. Use <code>go.html#yourcode</code> or open the main app to create links.');
+        return;
+      }
+
+      var custom = {};
+      try {
+        custom = JSON.parse(localStorage.getItem('shortlinks') || '{}');
+      } catch (e) {}
+
+      fetch('links.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .then(function (builtIn) {
+          var map = Object.assign({}, builtIn || {}, custom);
+          var norm = {};
+          Object.keys(map).forEach(function (k) {
+            norm[k.toLowerCase()] = map[k];
+          });
+          var target = norm[key];
+          if (typeof target !== 'string' || !target.trim()) {
+            fail('Unknown short code: <code>' + key + '</code>');
+            return;
+          }
+          try {
+            var u = new URL(target);
+            if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error();
+          } catch (e) {
+            fail('Invalid destination URL for this short code.');
+            return;
+          }
+          statusEl.textContent = 'Redirecting…';
+          manualEl.href = target;
+          hintEl.hidden = false;
+          document.title = 'Redirecting…';
+          location.replace(target);
+        })
+        .catch(function () {
+          fail('Could not load link list. Check that links.json is deployed.');
+        });
+    })();
+  </script>
+</body>
+</html>
